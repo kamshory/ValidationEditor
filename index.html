@@ -61,9 +61,9 @@
   </form>
 
   <h4>JSON Output</h4>
-  <pre id="jsonOutput">{}</pre>
+  <pre id="jsonOutput" class="json-output">{}</pre>
 
-  <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
+  <div class="modal fade validation-modal" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <form onsubmit="event.preventDefault(); builder.saveValidation();">
@@ -73,23 +73,23 @@
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label for="validationType" class="form-label">Validation Type</label>
-              <select class="form-select" id="validationType">
+              <span class="form-label">Validation Type</span>
+              <select class="form-select validation-type">
                 <option value="">-- Select Validation --</option>
               </select>
             </div>
-            <div id="validationProps"></div>
+            <div class="validation-props"></div>
 
             <div class="mt-3">
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="applyInsert">
-                <label class="form-check-label" for="applyInsert">
+                <input class="form-check-input apply-insert" type="checkbox" value="" id="apply-insert">
+                <label class="form-check-label" for="apply-insert">
                   Apply to Insert
                 </label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="applyUpdate">
-                <label class="form-check-label" for="applyUpdate">
+                <input class="form-check-input apply-update" type="checkbox" value="" id="apply-update">
+                <label class="form-check-label" for="apply-update">
                   Apply to Update
                 </label>
               </div>
@@ -113,13 +113,20 @@
      * as well as updating the UI and JSON output to reflect the current validation state.
      */
     class ValidationBuilder {
-      constructor() {
+      /**
+       * Initializes the ValidationBuilder with the modal selector and sets up event listeners.
+       * @param {string} modalSelector - The CSS selector for the validation modal.
+       */
+      constructor(modalSelector, jsonOutputSelector) {
+        this.modalSelector = modalSelector;
+        this.jsonOutputSelector = jsonOutputSelector;
+        this.modalElement = document.querySelector(modalSelector);
         this.currentField = null;
         this.currentIndex = null;
         this.validationsPerField = {};
-        this.propsContainer = document.getElementById("validationProps");
-        this.applyInsertCheckbox = document.getElementById("applyInsert");
-        this.applyUpdateCheckbox = document.getElementById("applyUpdate");
+        this.propsContainer = this.modalElement.querySelector(".validation-props");
+        this.applyInsertCheckbox = this.modalElement.querySelector(".apply-insert");
+        this.applyUpdateCheckbox = this.modalElement.querySelector(".apply-update");
         this.schema = this.initSchema();
         this.bindFieldButtons();
         this.initValidationSelector();
@@ -171,12 +178,12 @@
             const fieldGroup = e.target.closest(".field-group");
             this.currentField = fieldGroup.dataset.field;
             this.currentIndex = null;
-            document.getElementById("validationType").value = "";
+            this.modalElement.querySelector('.validation-type').value = "";
             this.propsContainer.innerHTML = "";
             // Reset checkboxes when opening for new validation
             this.applyInsertCheckbox.checked = false;
             this.applyUpdateCheckbox.checked = false;
-            new bootstrap.Modal(document.getElementById("validationModal")).show();
+            new bootstrap.Modal(document.querySelector(this.modalSelector)).show();
           });
         });
       }
@@ -185,7 +192,7 @@
        * Initializes the validation type selector dropdown with options from the schema.
        */
       initValidationSelector() {
-        const select = document.getElementById("validationType");
+        const select = this.modalElement.querySelector('.validation-type');
         for (const type in this.schema) {
           const opt = document.createElement("option");
           opt.value = type;
@@ -200,7 +207,7 @@
        * @param {Object} [validation={}] - Optional validation object to pre-fill input values.
        */
       renderPropsInputs(validation = {}) {
-        const selected = document.getElementById("validationType").value;
+        const selected = this.modalElement.querySelector('.validation-type').value;
         this.propsContainer.innerHTML = "";
         (this.schema[selected] || []).forEach(prop => {
           const div = document.createElement("div");
@@ -218,7 +225,7 @@
        * Saves the current validation (add or edit) to the field's validations list.
        */
       saveValidation() {
-        const type = document.getElementById("validationType").value;
+        const type = this.modalElement.querySelector('.validation-type').value;
         if (!type || !this.currentField) return;
 
         const props = {};
@@ -244,7 +251,7 @@
         }
 
         this.renderValidations();
-        bootstrap.Modal.getInstance(document.getElementById("validationModal")).hide();
+        bootstrap.Modal.getInstance(document.querySelector(this.modalSelector)).hide();
       }
 
       /**
@@ -258,7 +265,7 @@
           let data = _this.validationsPerField[field] || [];
           _this.renderFieldValidations(container, field, data);
         });
-        document.getElementById("jsonOutput").textContent = JSON.stringify(this.validationsPerField, null, 2);
+        document.querySelector(this.jsonOutputSelector).textContent = JSON.stringify(this.validationsPerField, null, 2);
       }
       
       /**
@@ -277,7 +284,7 @@
           let applyCheckboxes = '';
           applyCheckboxes += `<div class="validation-targets">`;
           applyCheckboxes += `<div class="form-check form-check-inline">`;
-          applyCheckboxes += `<input class="form-check-input" type="checkbox" disabled ${val.applyInsert ? 'checked' : ''}>`;
+          applyCheckboxes += `<input class="form-check-input " type="checkbox" disabled ${val.applyInsert ? 'checked' : ''}>`;
           applyCheckboxes += `<label class="form-check-label">Insert</label>`;
           applyCheckboxes += `</div>`;
           applyCheckboxes += `<div class="form-check form-check-inline">`;
@@ -321,13 +328,13 @@
         this.currentField = field;
         this.currentIndex = index;
         const validation = this.validationsPerField[field][index];
-        document.getElementById("validationType").value = validation.type;
+        this.modalElement.querySelector('.validation-type').value = validation.type;
         this.renderPropsInputs(validation); // Pass the validation object to pre-fill props and checkboxes
-        new bootstrap.Modal(document.getElementById("validationModal")).show();
+        bootstrap.Modal.getInstance(document.querySelector(this.modalSelector)).show();
       }
     }
 
-    const builder = new ValidationBuilder();
+    const builder = new ValidationBuilder('.validation-modal', '.json-output');
   </script>
 
 </body>
