@@ -39,21 +39,21 @@
 
   <form id="validationForm">
     <div class="mb-3 field-group" data-field="Name">
-      <label class="form-label">Field Name</label>
+      <span class="form-label">Field Name</span>
       <input type="text" class="form-control" placeholder="e.g. John">
       <div class="field-validations-list mt-2"></div>
       <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
     </div>
 
     <div class="mb-3 field-group" data-field="Email">
-      <label class="form-label">Field Email</label>
+      <span class="form-label">Field Email</span>
       <input type="email" class="form-control" placeholder="e.g. user@example.com">
       <div class="field-validations-list mt-2"></div>
       <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
     </div>
 
     <div class="mb-3 field-group" data-field="Address">
-      <label class="form-label">Field Address</label>
+      <span class="form-label">Field Address</span>
       <input type="text" class="form-control" placeholder="e.g. Jalan Mawar">
       <div class="field-validations-list mt-2"></div>
       <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
@@ -294,7 +294,7 @@
               ${applyCheckboxes}
             </div>
             <div>
-              <button type="button" class="btn btn-sm btn-warning me-2" onclick="builder.editValidation('${field}', ${idx})"><i class="fa-solid fa-pencil"></i></button>
+              <button type="button" class="btn btn-sm btn-primary me-2" onclick="builder.editValidation('${field}', ${idx})"><i class="fa-solid fa-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-danger" onclick="builder.deleteValidation('${field}', ${idx})"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
           container.appendChild(div);
@@ -304,10 +304,10 @@
       /**
        * Deletes a validation from a field's validations list.
        * @param {string} field - The field name.
-       * @param {number} idx - The index of the validation to delete.
+       * @param {number} index - The index of the validation to delete.
        */
-      deleteValidation(field, idx) {
-        this.validationsPerField[field].splice(idx, 1);
+      deleteValidation(field, index) {
+        this.validationsPerField[field].splice(index, 1);
         if (this.validationsPerField[field].length === 0) delete this.validationsPerField[field];
         this.renderValidations();
       }
@@ -315,12 +315,12 @@
       /**
        * Opens the modal to edit an existing validation for a field.
        * @param {string} field - The field name.
-       * @param {number} idx - The index of the validation to edit.
+       * @param {number} index - The index of the validation to edit.
        */
-      editValidation(field, idx) {
+      editValidation(field, index) {
         this.currentField = field;
-        this.currentIndex = idx;
-        const validation = this.validationsPerField[field][idx];
+        this.currentIndex = index;
+        const validation = this.validationsPerField[field][index];
         document.getElementById("validationType").value = validation.type;
         this.renderPropsInputs(validation); // Pass the validation object to pre-fill props and checkboxes
         new bootstrap.Modal(document.getElementById("validationModal")).show();
