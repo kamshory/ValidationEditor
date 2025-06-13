@@ -8,8 +8,8 @@
   <style>
     .field-validations {
       border: 1px solid #dee2e6;
-      border-radius: .5rem;
-      padding: 1rem;
+      border-radius: .2rem;
+      padding: .5rem 1rem;
       margin-bottom: 1rem;
     }
     pre {
@@ -27,6 +27,9 @@
     }
     .validation-targets .form-check-inline {
         margin-right: 1rem;
+    }
+    .form-check-input:disabled, .form-check-input:disabled ~ .form-check-label, .form-check-input[disabled] ~ .form-check-label{
+      opacity: 1 !important;
     }
   </style>
 </head>
@@ -252,7 +255,8 @@
         document.querySelectorAll(".field-group").forEach(group => {
           const field = group.dataset.field;
           const container = group.querySelector(".field-validations-list");
-          _this.renderFieldValidations(container, field);
+          let data = _this.validationsPerField[field] || [];
+          _this.renderFieldValidations(container, field, data);
         });
         document.getElementById("jsonOutput").textContent = JSON.stringify(this.validationsPerField, null, 2);
       }
@@ -261,10 +265,11 @@
        * Renders the list of validations for a specific field in the UI.
        * @param {HTMLElement} container - The container element to render validations into.
        * @param {string} field - The field name.
+       * @param {Object} data - The validations data for the field.
        */
-      renderFieldValidations(container, field) {
+      renderFieldValidations(container, field, data) {
         container.innerHTML = "";
-        (this.validationsPerField[field] || []).forEach((val, idx) => {
+        (data || []).forEach((val, idx) => {
           const propsStr = Object.entries(val)
             .filter(([k]) => k !== "type" && k !== "applyInsert" && k !== "applyUpdate") // Exclude these keys
             .map(([k, v]) => `${k}="${v}"`).join(", ");
