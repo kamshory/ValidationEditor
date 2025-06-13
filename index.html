@@ -8,8 +8,8 @@
   <style>
     .field-validations {
       border: 1px solid #dee2e6;
-      border-radius: .2rem;
-      padding: .5rem 1rem;
+      border-radius: 3px;
+      padding: 5px 12px;
       margin-bottom: 1rem;
     }
     pre {
@@ -301,7 +301,7 @@
               ${applyCheckboxes}
             </div>
             <div>
-              <button type="button" class="btn btn-sm btn-primary me-2" onclick="builder.editValidation('${field}', ${idx})"><i class="fa-solid fa-pencil"></i></button>
+              <button type="button" class="btn btn-sm btn-primary me-1" onclick="builder.editValidation('${field}', ${idx})"><i class="fa-solid fa-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-danger" onclick="builder.deleteValidation('${field}', ${idx})"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
           container.appendChild(div);
