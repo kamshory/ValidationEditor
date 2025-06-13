@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Validation Builder</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     .field-validations {
       border: 1px solid #dee2e6;
@@ -18,6 +19,15 @@
     ::placeholder {
       color: #aaaaaa !important;
     }
+    /* Style for the new checkboxes display */
+    .validation-targets {
+        margin-top: 0.5rem;
+        font-size: 0.9em;
+        color: #6c757d;
+    }
+    .validation-targets .form-check-inline {
+        margin-right: 1rem;
+    }
   </style>
 </head>
 <body class="container py-4">
@@ -28,29 +38,28 @@
     <div class="mb-3 field-group" data-field="Name">
       <label class="form-label">Field Name</label>
       <input type="text" class="form-control" placeholder="e.g. John">
-      <button type="button" class="btn btn-primary mt-2">Add Validation</button>
       <div class="field-validations-list mt-2"></div>
+      <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
     </div>
 
     <div class="mb-3 field-group" data-field="Email">
       <label class="form-label">Field Email</label>
       <input type="email" class="form-control" placeholder="e.g. user@example.com">
-      <button type="button" class="btn btn-primary mt-2">Add Validation</button>
       <div class="field-validations-list mt-2"></div>
+      <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
     </div>
 
     <div class="mb-3 field-group" data-field="Address">
       <label class="form-label">Field Address</label>
       <input type="text" class="form-control" placeholder="e.g. Jalan Mawar">
-      <button type="button" class="btn btn-primary mt-2">Add Validation</button>
       <div class="field-validations-list mt-2"></div>
+      <button type="button" class="btn btn-primary mt-2"><i class="fa-solid fa-plus"></i> Add Validation</button>
     </div>
   </form>
 
   <h4>JSON Output</h4>
   <pre id="jsonOutput">{}</pre>
 
-  <!-- Modal -->
   <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -67,9 +76,25 @@
               </select>
             </div>
             <div id="validationProps"></div>
+
+            <div class="mt-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="applyInsert">
+                <label class="form-check-label" for="applyInsert">
+                  Apply to Insert
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="applyUpdate">
+                <label class="form-check-label" for="applyUpdate">
+                  Apply to Update
+                </label>
+              </div>
+            </div>
+
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Simpan Validasi</button>
+            <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Save Validation</button>
           </div>
         </form>
       </div>
@@ -84,6 +109,8 @@
         this.currentIndex = null;
         this.validationsPerField = {};
         this.propsContainer = document.getElementById("validationProps");
+        this.applyInsertCheckbox = document.getElementById("applyInsert");
+        this.applyUpdateCheckbox = document.getElementById("applyUpdate");
         this.schema = this.initSchema();
         this.bindFieldButtons();
         this.initValidationSelector();
@@ -130,6 +157,9 @@
             this.currentIndex = null;
             document.getElementById("validationType").value = "";
             this.propsContainer.innerHTML = "";
+            // Reset checkboxes when opening for new validation
+            this.applyInsertCheckbox.checked = false;
+            this.applyUpdateCheckbox.checked = false;
             new bootstrap.Modal(document.getElementById("validationModal")).show();
           });
         });
@@ -155,6 +185,10 @@
           div.innerHTML = `<label class="form-label">${prop}</label><input type="text" class="form-control" data-prop="${prop}" placeholder="${prop}" value="${validation[prop] || ''}">`;
           this.propsContainer.appendChild(div);
         });
+
+        // Set checkbox states if validation object is provided (for editing)
+        this.applyInsertCheckbox.checked = validation.applyInsert === true;
+        this.applyUpdateCheckbox.checked = validation.applyUpdate === true;
       }
 
       saveValidation() {
@@ -166,7 +200,13 @@
           props[input.dataset.prop] = input.value;
         });
 
-        const validation = { type, ...props };
+        const validation = {
+          type,
+          ...props,
+          applyInsert: this.applyInsertCheckbox.checked,
+          applyUpdate: this.applyUpdateCheckbox.checked
+        };
+
         if (!this.validationsPerField[this.currentField]) {
           this.validationsPerField[this.currentField] = [];
         }
@@ -187,15 +227,34 @@
           const container = group.querySelector(".field-validations-list");
           container.innerHTML = "";
           (this.validationsPerField[field] || []).forEach((val, idx) => {
+            const propsStr = Object.entries(val)
+              .filter(([k]) => k !== "type" && k !== "applyInsert" && k !== "applyUpdate") // Exclude these keys
+              .map(([k, v]) => `${k}="${v}"`).join(", ");
+
+            let applyCheckboxes = '';
+            if (val.applyInsert || val.applyUpdate) {
+                applyCheckboxes += `<div class="validation-targets">`;
+                applyCheckboxes += `<div class="form-check form-check-inline">`;
+                applyCheckboxes += `<input class="form-check-input" type="checkbox" disabled ${val.applyInsert ? 'checked' : ''}>`;
+                applyCheckboxes += `<label class="form-check-label">Insert</label>`;
+                applyCheckboxes += `</div>`;
+                applyCheckboxes += `<div class="form-check form-check-inline">`;
+                applyCheckboxes += `<input class="form-check-input" type="checkbox" disabled ${val.applyUpdate ? 'checked' : ''}>`;
+                applyCheckboxes += `<label class="form-check-label">Update</label>`;
+                applyCheckboxes += `</div>`;
+                applyCheckboxes += `</div>`;
+            }
+
             const div = document.createElement("div");
             div.className = "field-validations d-flex justify-content-between align-items-center mb-2";
-            const propsStr = Object.entries(val)
-              .filter(([k]) => k !== "type")
-              .map(([k, v]) => `${k}="${v}"`).join(", ");
-            div.innerHTML = `<span>@${val.type}(${propsStr})</span>
+            div.innerHTML = `
               <div>
-                <button type="button" class="btn btn-sm btn-warning me-2" onclick="builder.editValidation('${field}', ${idx})">Edit</button>
-                <button type="button" class="btn btn-sm btn-danger" onclick="builder.deleteValidation('${field}', ${idx})">Hapus</button>
+                <span>@${val.type}(${propsStr})</span>
+                ${applyCheckboxes}
+              </div>
+              <div>
+                <button type="button" class="btn btn-sm btn-warning me-2" onclick="builder.editValidation('${field}', ${idx})"><i class="fa-solid fa-pencil"></i></button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="builder.deleteValidation('${field}', ${idx})"><i class="fa-solid fa-trash-can"></i></button>
               </div>`;
             container.appendChild(div);
           });
@@ -214,7 +273,7 @@
         this.currentIndex = idx;
         const validation = this.validationsPerField[field][idx];
         document.getElementById("validationType").value = validation.type;
-        this.renderPropsInputs(validation);
+        this.renderPropsInputs(validation); // Pass the validation object to pre-fill props and checkboxes
         new bootstrap.Modal(document.getElementById("validationModal")).show();
       }
     }
